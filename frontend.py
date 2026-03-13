@@ -24,8 +24,7 @@ zone = st.selectbox("Premium / Discount", ["Premium", "Discount", "Equilibrium"]
 
 # BUTTON
 if st.button("Predict Trade"):
-
-data = {
+    data = {
         "trend context": trend,
         "bos direction": bos,
         "liquidity sweep": liquidity,
@@ -87,4 +86,5 @@ if prob >= 75:
     for feature, importance in result["top_features"]:
 
         st.write(f"{feature}: {round(importance * 100, 2)}% influence")
+
 
