@@ -1,29 +1,36 @@
-import joblib
+import streamlit as st
 import pandas as pd
+import joblib
+import plotly.graph_objects as go
 
+# Load trained model and features
 model = joblib.load("trade_probability_model.pkl")
 features = joblib.load("model_features.pkl")
-
-import streamlit as st
-import requests
-import plotly.graph_objects as go
 
 st.title("AI Trade Probability Predictor")
 
 st.write("Enter market conditions to evaluate trade probability")
 
-# INPUTS
+# Inputs
 trend = st.selectbox("Trend Context", ["Bullish", "Bearish"])
+
 bos = st.selectbox("BOS Direction", ["Long", "Short"])
+
 liquidity = st.checkbox("Liquidity Sweep")
+
 keylevel = st.selectbox("Key Level", ["Support", "Resistance", "None"])
+
 volatility = st.selectbox("Volatility", ["High", "Medium", "Low"])
+
 session = st.selectbox("Trading Session", ["London", "NY", "Asia"])
+
 oc_break = st.checkbox("Orderflow Break")
+
 zone = st.selectbox("Premium / Discount", ["Premium", "Discount", "Equilibrium"])
 
-# BUTTON
+
 if st.button("Predict Trade"):
+
     data = {
         "trend context": trend,
         "bos direction": bos,
@@ -35,28 +42,28 @@ if st.button("Predict Trade"):
         "Premium_Discount": zone
     }
 
-df = pd.DataFrame([data])
+    # Convert to dataframe
+    df = pd.DataFrame([data])
 
-df_encoded = pd.get_dummies(df)
+    # Encode categorical variables
+    df_encoded = pd.get_dummies(df)
 
-df_encoded = df_encoded.reindex(columns=features, fill_value=0)
+    # Match training feature structure
+    df_encoded = df_encoded.reindex(columns=features, fill_value=0)
 
-prediction = model.predict(df_encoded)[0]
+    # Make prediction
+    prediction = model.predict(df_encoded)[0]
+    probability = model.predict_proba(df_encoded)[0][1]
 
-probability = model.predict_proba(df_encoded)[0][1]
+    # Display prediction
+    if prediction == 1:
+        st.success("High Probability Trade")
+    else:
+        st.error("Low Probability Trade")
 
-result = {
-    "prediction": int(prediction),
-    "probability": float(probability)
-}
+    prob = probability * 100
 
-if result["prediction"] == 1:
-    st.success("High Probability Trade")
-else:
-    st.error("Low Probability Trade")
-
-    prob = result["probability"] * 100
-
+    # Gauge meter
     fig = go.Figure(go.Indicator(
         mode="gauge+number",
         value=prob,
@@ -74,17 +81,12 @@ else:
 
     st.plotly_chart(fig)
 
-if prob >= 75:
+    # Signal strength
+    if prob >= 75:
         st.success("STRONG BUY SETUP")
     elif prob >= 55:
         st.warning("MODERATE SETUP")
     else:
         st.error("WEAK SETUP - AVOID TRADE")
 
-    st.subheader("Key Factors Influencing This Prediction")
-
-    for feature, importance in result["top_features"]:
-
-        st.write(f"{feature}: {round(importance * 100, 2)}% influence")
-
-
+    st.write("Model Confidence:", round(prob, 2), "%")
