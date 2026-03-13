@@ -25,7 +25,7 @@ zone = st.selectbox("Premium / Discount", ["Premium", "Discount", "Equilibrium"]
 # BUTTON
 if st.button("Predict Trade"):
 
-    data = {
+data = {
         "trend context": trend,
         "bos direction": bos,
         "liquidity sweep": liquidity,
@@ -36,7 +36,7 @@ if st.button("Predict Trade"):
         "Premium_Discount": zone
     }
 
-    df = pd.DataFrame([data])
+df = pd.DataFrame([data])
 
 df_encoded = pd.get_dummies(df)
 
@@ -51,10 +51,10 @@ result = {
     "probability": float(probability)
 }
 
-    if result["prediction"] == 1:
-        st.success("High Probability Trade")
-    else:
-        st.error("Low Probability Trade")
+if result["prediction"] == 1:
+    st.success("High Probability Trade")
+else:
+    st.error("Low Probability Trade")
 
     prob = result["probability"] * 100
 
@@ -75,7 +75,7 @@ result = {
 
     st.plotly_chart(fig)
 
-    if prob >= 75:
+if prob >= 75:
         st.success("STRONG BUY SETUP")
     elif prob >= 55:
         st.warning("MODERATE SETUP")
@@ -87,3 +87,4 @@ result = {
     for feature, importance in result["top_features"]:
 
         st.write(f"{feature}: {round(importance * 100, 2)}% influence")
+
