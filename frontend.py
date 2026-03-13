@@ -1,3 +1,9 @@
+import joblib
+import pandas as pd
+
+model = joblib.load("trade_probability_model.pkl")
+features = joblib.load("model_features.pkl")
+
 import streamlit as st
 import requests
 import plotly.graph_objects as go
@@ -16,7 +22,6 @@ session = st.selectbox("Trading Session", ["London", "NY", "Asia"])
 oc_break = st.checkbox("Orderflow Break")
 zone = st.selectbox("Premium / Discount", ["Premium", "Discount", "Equilibrium"])
 
-
 # BUTTON
 if st.button("Predict Trade"):
 
@@ -31,12 +36,20 @@ if st.button("Predict Trade"):
         "Premium_Discount": zone
     }
 
-    response = requests.post(
-        "http://127.0.0.1:8000/predict",
-        json=data
-    )
+    df = pd.DataFrame([data])
 
-    result = response.json()
+df_encoded = pd.get_dummies(df)
+
+df_encoded = df_encoded.reindex(columns=features, fill_value=0)
+
+prediction = model.predict(df_encoded)[0]
+
+probability = model.predict_proba(df_encoded)[0][1]
+
+result = {
+    "prediction": int(prediction),
+    "probability": float(probability)
+}
 
     if result["prediction"] == 1:
         st.success("High Probability Trade")
@@ -72,4 +85,5 @@ if st.button("Predict Trade"):
     st.subheader("Key Factors Influencing This Prediction")
 
     for feature, importance in result["top_features"]:
+
         st.write(f"{feature}: {round(importance * 100, 2)}% influence")
